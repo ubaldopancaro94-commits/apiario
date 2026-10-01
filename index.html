@@ -1,33 +1,40 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Arnia A07</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:10px;font-family:Arial,sans-serif;background:#fff;color:#222}.wrap{max-width:650px;margin:auto}.card{border:1px solid #ddd;border-radius:14px;overflow:hidden;margin-bottom:12px}table{width:100%;border-collapse:collapse}td{padding:13px 8px;border-bottom:1px solid #e7e7e7}tr:last-child td{border:0}.ico{width:44px;text-align:center;font-size:21px}.campo{font-weight:700;width:38%}.ver{color:#b86600;font-weight:700}button{width:100%;border:0;border-radius:14px;padding:14px;margin:5px 0;font-size:16px;font-weight:700;color:#fff}.mic{background:#d99000}.save{background:#2e7d32}.mic.on{background:#c62828}.msg{font-size:14px;color:#555}.history-title{margin:22px 3px 8px}.visit{border:1px solid #ddd;border-radius:14px;padding:12px;margin:9px 0;background:#fafafa}.date{font-weight:700;margin-bottom:8px}.visit p{margin:5px 0;font-size:14px}.empty{color:#666}.error{color:#b00020}
-</style></head><body><main class="wrap">
+*{box-sizing:border-box}body{margin:0;padding:10px;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#222}.wrap{max-width:650px;margin:auto}.card{border:1px solid #ddd;border-radius:14px;overflow:hidden;margin-bottom:12px}table{width:100%;border-collapse:collapse}td{padding:10px 8px;border-bottom:1px solid #e7e7e7;vertical-align:middle}tr:last-child td{border:0}.ico{width:42px;text-align:center;font-size:21px}.campo{font-weight:700;width:36%}.valinput{width:100%;min-width:0;border:1px solid transparent;border-radius:8px;padding:8px;font:inherit;color:#222;background:#fff}.valinput:focus{border-color:#d99000;outline:none;background:#fffaf0}.valinput.ver{color:#b86600;font-weight:700}button{width:100%;border:0;border-radius:14px;padding:14px;margin:5px 0;font-size:16px;font-weight:700;color:#fff;cursor:pointer}.mic{background:#d99000}.mic.on{background:#c62828}.save{background:#2e7d32}.msg{font-size:14px;color:#555;line-height:1.4}.ok{color:#176b20}.error{color:#b00020;white-space:pre-wrap;word-break:break-word}.history-title{margin:22px 3px 8px}.visit{border:1px solid #ddd;border-radius:14px;padding:12px;margin:9px 0;background:#fafafa}.date{font-weight:700;margin-bottom:8px}.visit p{margin:5px 0;font-size:14px}.empty{color:#666}@media(max-width:480px){body{padding:7px}td{padding:9px 5px;font-size:14px}.ico{width:36px;font-size:20px}.campo{width:34%}}
+</style>
+</head>
+<body><main class="wrap">
 <div class="card"><table><tbody id="rows"></tbody></table></div>
 <button id="mic" class="mic">🎤 Modifica a voce</button>
 <button id="save" class="save">💾 Salva visita</button>
-<p id="msg" class="msg">Esempio: “Peso 47 chili”.</p>
-<h2 class="history-title">📚 Storico visite</h2><div id="history"><p class="empty">Caricamento...</p></div>
+<p id="msg" class="msg">Puoi modificare i valori a mano oppure dire: “Peso 47 chili, temperatura 32 gradi, umidità 65 percento, regina presente”.</p>
+<h2 class="history-title">📚 Storico visite</h2>
+<div id="history"><p class="empty">Caricamento...</p></div>
 </main>
 <script>
-const URL='https://zyigecgmidnpacnfwlym.supabase.co';
-const KEY='sb_publishable_nZVA6m0GfnF6nthL2Exh3A_5PMhouC0';
+'use strict';
+const SUPABASE_URL='https://zyigecgmidnpacnfwlym.supabase.co';
+const SUPABASE_KEY='sb_publishable_nZVA6m0GfnF6nthL2Exh3A_5PMhouC0';
 const TABLE='Visite';
-const API=URL+'/rest/v1/'+encodeURIComponent(TABLE);
+const ENDPOINT=SUPABASE_URL+'/rest/v1/'+TABLE;
+const headers={apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY};
 const defaults={Arnia:'A07',Regina:'Presente',Covata:'6 telaini, buona',Scorte:'Discrete','Forza famiglia':'Alta','Prossima azione':'Verificare melario',Peso:'Da verificare',Temperatura:'Da verificare','Umidità':'Da verificare',Suono:'Da verificare'};
-let data={...defaults};
 const icons={Arnia:'🐝',Regina:'👑',Covata:'🐣',Scorte:'🍯','Forza famiglia':'💪','Prossima azione':'📋',Peso:'⚖️',Temperatura:'🌡️','Umidità':'💧',Suono:'🎤'};
 const aliases=[['prossima azione','Prossima azione'],['forza famiglia','Forza famiglia'],['temperatura','Temperatura'],['umidità','Umidità'],['umidita','Umidità'],['regina','Regina'],['covata','Covata'],['scorte','Scorte'],['peso','Peso'],['suono','Suono']];
-const rows=document.getElementById('rows'),msg=document.getElementById('msg'),history=document.getElementById('history');
-function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function render(){rows.innerHTML=Object.entries(data).map(([k,v])=>`<tr><td class="ico">${icons[k]}</td><td class="campo">${esc(k)}</td><td class="${v==='Da verificare'?'ver':''}">${esc(v)}</td></tr>`).join('')}
-function apply(t){const low=t.toLocaleLowerCase('it-IT'),hit=aliases.find(([a])=>low.startsWith(a));if(!hit){msg.textContent='Campo non riconosciuto: “'+t+'”';return}const[a,k]=hit;let v=t.slice(a.length).trim().replace(/^[:=\-]\s*/,'');if(!v){msg.textContent='Pronuncia anche il valore.';return}v=v[0].toUpperCase()+v.slice(1);data[k]=v;render();msg.textContent='✓ '+k+' aggiornato: '+v}
-document.getElementById('mic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){msg.textContent='Riconoscimento vocale non disponibile in questo browser.';return}const r=new SR(),b=document.getElementById('mic');r.lang='it-IT';r.interimResults=false;r.onstart=()=>{b.classList.add('on');b.textContent='🎙️ Sto ascoltando…'};r.onend=()=>{b.classList.remove('on');b.textContent='🎤 Modifica a voce'};r.onerror=e=>msg.textContent='Errore microfono: '+e.error;r.onresult=e=>apply(e.results[0][0].transcript);r.start()};
-async function apiFetch(url,options={}){const h={apikey:KEY,'Content-Type':'application/json',...(options.headers||{})};const res=await fetch(url,{...options,headers:h});if(!res.ok){throw new Error((await res.text())||('HTTP '+res.status));}return res}
-async function load(){try{const res=await apiFetch(API+'?select=*&arnia=eq.A07&order=data_visita.desc');const v=await res.json();if(!v.length){history.innerHTML='<p class="empty">Nessuna visita salvata.</p>';return}history.innerHTML=v.map(x=>`<article class="visit"><div class="date">📅 ${new Date(x.data_visita).toLocaleString('it-IT')}</div><p>👑 <b>Regina:</b> ${esc(x.regina)}</p><p>🐣 <b>Covata:</b> ${esc(x.covata)}</p><p>🍯 <b>Scorte:</b> ${esc(x.scorte)}</p><p>💪 <b>Forza famiglia:</b> ${esc(x.forza_famiglia)}</p><p>📋 <b>Prossima azione:</b> ${esc(x.prossima_azione)}</p><p>⚖️ <b>Peso:</b> ${esc(x.peso)}</p><p>🌡️ <b>Temperatura:</b> ${esc(x.temperatura)}</p><p>💧 <b>Umidità:</b> ${esc(x.umidita)}</p><p>🎤 <b>Suono:</b> ${esc(x.suono)}</p></article>`).join('')}catch(e){history.innerHTML='<p class="error">Errore caricamento storico: '+esc(e.message)+'</p>'}}
-document.getElementById('save').onclick=async()=>{msg.textContent='Salvataggio in corso…';const row={arnia:'A07',data_visita:new Date().toISOString(),regina:data.Regina,covata:data.Covata,scorte:data.Scorte,forza_famiglia:data['Forza famiglia'],prossima_azione:data['Prossima azione'],peso:data.Peso,temperatura:data.Temperatura,umidita:data['Umidità'],suono:data.Suono};try{await apiFetch(API,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(row)});msg.textContent='✓ Visita salvata e condivisa.';await load()}catch(e){msg.textContent='Errore salvataggio: '+e.message}};
-render();load();
+let current={...defaults};
+const rows=document.getElementById('rows'), msg=document.getElementById('msg'), history=document.getElementById('history');
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){rows.innerHTML=Object.entries(current).map(([k,v])=>`<tr><td class="ico">${icons[k]}</td><td class="campo">${esc(k)}</td><td><input class="valinput ${v==='Da verificare'?'ver':''}" data-key="${esc(k)}" value="${esc(v)}"></td></tr>`).join('');document.querySelectorAll('.valinput').forEach(el=>el.addEventListener('input',e=>{current[e.target.dataset.key]=e.target.value;e.target.classList.toggle('ver',e.target.value==='Da verificare')}))}
+function applySpeech(text){const spoken=text.trim(),low=spoken.toLocaleLowerCase('it-IT');const matches=[];aliases.forEach(([a,k])=>{let p=low.indexOf(a);while(p>=0){matches.push({a,k,p});p=low.indexOf(a,p+a.length)}});matches.sort((a,b)=>a.p-b.p);const unique=matches.filter((x,i,a)=>!i||x.p!==a[i-1].p);if(!unique.length){msg.textContent='Nessun campo riconosciuto: “'+spoken+'”';return}const changed=[];unique.forEach((x,i)=>{const end=i+1<unique.length?unique[i+1].p:spoken.length;let v=spoken.slice(x.p+x.a.length,end).trim().replace(/^[,:;=\-\s]+|[,:;\s]+$/g,'').replace(/\s+(e|poi)$/i,'').trim();if(v){v=v.charAt(0).toUpperCase()+v.slice(1);current[x.k]=v;changed.push(x.k)}});render();msg.textContent=changed.length?'✓ Aggiornati: '+changed.join(', '):'Campi riconosciuti, ma valori non riconosciuti.'}
+document.getElementById('mic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){msg.textContent='Riconoscimento vocale non disponibile in questo browser.';return}const r=new SR(),btn=document.getElementById('mic');r.lang='it-IT';r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>{btn.classList.add('on');btn.textContent='🎙️ Sto ascoltando…'};r.onend=()=>{btn.classList.remove('on');btn.textContent='🎤 Modifica a voce'};r.onerror=e=>msg.textContent='Errore microfono: '+e.error;r.onresult=e=>applySpeech(e.results[0][0].transcript);r.start()};
+async function request(url,options={}){const response=await fetch(url,{...options,mode:'cors',headers:{...headers,...(options.headers||{})}});const text=await response.text();if(!response.ok)throw new Error('HTTP '+response.status+' '+text);return text?JSON.parse(text):null}
+function visitHtml(x){return `<article class="visit"><div class="date">📅 ${new Date(x.data_visita).toLocaleString('it-IT')}</div><p>👑 <b>Regina:</b> ${esc(x.regina)}</p><p>🐣 <b>Covata:</b> ${esc(x.covata)}</p><p>🍯 <b>Scorte:</b> ${esc(x.scorte)}</p><p>💪 <b>Forza famiglia:</b> ${esc(x.forza_famiglia)}</p><p>📋 <b>Prossima azione:</b> ${esc(x.prossima_azione)}</p><p>⚖️ <b>Peso:</b> ${esc(x.peso)}</p><p>🌡️ <b>Temperatura:</b> ${esc(x.temperatura)}</p><p>💧 <b>Umidità:</b> ${esc(x.umidita)}</p><p>🎤 <b>Suono:</b> ${esc(x.suono)}</p></article>`}
+async function loadHistory(){history.innerHTML='<p class="empty">Caricamento...</p>';try{const q='?select=*&arnia=eq.A07&order=data_visita.desc';const visits=await request(ENDPOINT+q);history.innerHTML=visits&&visits.length?visits.map(visitHtml).join(''):'<p class="empty">Nessuna visita salvata.</p>'}catch(e){history.innerHTML='<p class="error">Errore caricamento storico: '+esc(e.message)+'</p>'}}
+document.getElementById('save').onclick=async()=>{msg.textContent='Salvataggio in corso…';const row={arnia:'A07',data_visita:new Date().toISOString(),regina:current.Regina,covata:current.Covata,scorte:current.Scorte,forza_famiglia:current['Forza famiglia'],prossima_azione:current['Prossima azione'],peso:current.Peso,temperatura:current.Temperatura,umidita:current['Umidità'],suono:current.Suono};try{await request(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});msg.className='msg ok';msg.textContent='✓ Visita salvata e condivisa.';await loadHistory()}catch(e){msg.className='msg error';msg.textContent='Errore salvataggio: '+e.message}};
+render();loadHistory();
 </script></body></html>
