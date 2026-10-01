@@ -1,17 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Arnia A07</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:10px;font-family:Arial,sans-serif;background:#fff;color:#222}.wrap{max-width:600px;margin:auto}.scheda{border:1px solid #ddd;border-radius:14px;overflow:hidden}table{width:100%;border-collapse:collapse}td{padding:14px 8px;border-bottom:1px solid #e7e7e7}tr:last-child td{border:0}.ico{width:44px;text-align:center;font-size:22px}.campo{font-weight:700;width:38%}.ver{color:#b86600;font-weight:700}.controls{margin-top:12px}.mic{width:100%;border:0;border-radius:14px;padding:15px;background:#d99000;color:#fff;font-size:17px;font-weight:700}.mic.on{background:#c62828}.msg{margin:9px 1px;color:#555;font-size:14px}.help{font-size:13px;color:#666}
-</style></head><body><div class="wrap"><div class="scheda"><table><tbody id="rows"></tbody></table></div><div class="controls"><button id="mic" class="mic">🎤 Modifica a voce</button><p id="msg" class="msg">Esempio: “Peso 47 chili” oppure “Regina presente”.</p><div class="help">Le modifiche vengono salvate su questo dispositivo.</div></div></div>
+*{box-sizing:border-box}body{margin:0;padding:10px;font-family:Arial,sans-serif;background:#fff;color:#222}.wrap{max-width:650px;margin:auto}.card{border:1px solid #ddd;border-radius:14px;overflow:hidden;margin-bottom:12px}table{width:100%;border-collapse:collapse}td{padding:13px 8px;border-bottom:1px solid #e7e7e7}tr:last-child td{border:0}.ico{width:44px;text-align:center;font-size:21px}.campo{font-weight:700;width:38%}.ver{color:#b86600;font-weight:700}button{width:100%;border:0;border-radius:14px;padding:14px;margin:5px 0;font-size:16px;font-weight:700;color:#fff}.mic{background:#d99000}.save{background:#2e7d32}.mic.on{background:#c62828}.msg{font-size:14px;color:#555}.history-title{margin:22px 3px 8px}.visit{border:1px solid #ddd;border-radius:14px;padding:12px;margin:9px 0;background:#fafafa}.date{font-weight:700;margin-bottom:8px}.visit p{margin:5px 0;font-size:14px}.empty{color:#666}.error{color:#b00020}
+</style></head><body><main class="wrap">
+<div class="card"><table><tbody id="rows"></tbody></table></div>
+<button id="mic" class="mic">🎤 Modifica a voce</button>
+<button id="save" class="save">💾 Salva visita</button>
+<p id="msg" class="msg">Esempio: “Peso 47 chili”.</p>
+<h2 class="history-title">📚 Storico visite</h2><div id="history"><p class="empty">Caricamento...</p></div>
+</main>
 <script>
-const defaults={"Arnia":"A07","Regina":"Presente","Covata":"6 telaini, buona","Scorte":"Discrete","Forza famiglia":"Alta","Prossima azione":"Verificare melario","Data visita":"01/10/2026","Peso":"Da verificare","Temperatura":"Da verificare","Umidità":"Da verificare","Suono":"Da verificare"};
-const icons={"Arnia":"🐝","Regina":"👑","Covata":"🐣","Scorte":"🍯","Forza famiglia":"💪","Prossima azione":"📋","Data visita":"📅","Peso":"⚖️","Temperatura":"🌡️","Umidità":"💧","Suono":"🎤"};
-let data={...defaults,...JSON.parse(localStorage.getItem('arniaA07')||'{}')};
-const aliases=[["prossima azione","Prossima azione"],["forza famiglia","Forza famiglia"],["data visita","Data visita"],["temperatura","Temperatura"],["umidità","Umidità"],["umidita","Umidità"],["regina","Regina"],["covata","Covata"],["scorte","Scorte"],["peso","Peso"],["suono","Suono"],["arnia","Arnia"]];
-function render(){document.getElementById('rows').innerHTML=Object.entries(data).map(([k,v])=>`<tr><td class="ico">${icons[k]}</td><td class="campo">${k}</td><td class="${v==='Da verificare'?'ver':''}">${v}</td></tr>`).join('')}
-function apply(t){let low=t.toLocaleLowerCase('it-IT'),hit=aliases.find(([a])=>low.startsWith(a));if(!hit){msg.textContent='Campo non riconosciuto: “'+t+'”';return}let[a,k]=hit,v=t.slice(a.length).trim().replace(/^[:=\-]\s*/,'');if(!v){msg.textContent='Pronuncia anche il valore.';return}v=v.charAt(0).toUpperCase()+v.slice(1);data[k]=v;localStorage.setItem('arniaA07',JSON.stringify(data));render();msg.textContent='✓ '+k+' aggiornato: '+v}
-const btn=document.getElementById('mic'),msg=document.getElementById('msg');btn.onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){msg.textContent='Riconoscimento vocale non disponibile in questo browser.';return}const r=new SR();r.lang='it-IT';r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>{btn.classList.add('on');btn.textContent='🎙️ Sto ascoltando…'};r.onend=()=>{btn.classList.remove('on');btn.textContent='🎤 Modifica a voce'};r.onerror=e=>msg.textContent='Errore microfono: '+e.error;r.onresult=e=>apply(e.results[0][0].transcript);r.start()};render();
+const URL='https://zyigecgmidnpacnfwlym.supabase.co';
+const KEY='sb_publishable_nZVA6m0GfnF6nthL2Exh3A_5PMhouC0';
+const TABLE='Visite';
+const API=URL+'/rest/v1/'+encodeURIComponent(TABLE);
+const defaults={Arnia:'A07',Regina:'Presente',Covata:'6 telaini, buona',Scorte:'Discrete','Forza famiglia':'Alta','Prossima azione':'Verificare melario',Peso:'Da verificare',Temperatura:'Da verificare','Umidità':'Da verificare',Suono:'Da verificare'};
+let data={...defaults};
+const icons={Arnia:'🐝',Regina:'👑',Covata:'🐣',Scorte:'🍯','Forza famiglia':'💪','Prossima azione':'📋',Peso:'⚖️',Temperatura:'🌡️','Umidità':'💧',Suono:'🎤'};
+const aliases=[['prossima azione','Prossima azione'],['forza famiglia','Forza famiglia'],['temperatura','Temperatura'],['umidità','Umidità'],['umidita','Umidità'],['regina','Regina'],['covata','Covata'],['scorte','Scorte'],['peso','Peso'],['suono','Suono']];
+const rows=document.getElementById('rows'),msg=document.getElementById('msg'),history=document.getElementById('history');
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){rows.innerHTML=Object.entries(data).map(([k,v])=>`<tr><td class="ico">${icons[k]}</td><td class="campo">${esc(k)}</td><td class="${v==='Da verificare'?'ver':''}">${esc(v)}</td></tr>`).join('')}
+function apply(t){const low=t.toLocaleLowerCase('it-IT'),hit=aliases.find(([a])=>low.startsWith(a));if(!hit){msg.textContent='Campo non riconosciuto: “'+t+'”';return}const[a,k]=hit;let v=t.slice(a.length).trim().replace(/^[:=\-]\s*/,'');if(!v){msg.textContent='Pronuncia anche il valore.';return}v=v[0].toUpperCase()+v.slice(1);data[k]=v;render();msg.textContent='✓ '+k+' aggiornato: '+v}
+document.getElementById('mic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){msg.textContent='Riconoscimento vocale non disponibile in questo browser.';return}const r=new SR(),b=document.getElementById('mic');r.lang='it-IT';r.interimResults=false;r.onstart=()=>{b.classList.add('on');b.textContent='🎙️ Sto ascoltando…'};r.onend=()=>{b.classList.remove('on');b.textContent='🎤 Modifica a voce'};r.onerror=e=>msg.textContent='Errore microfono: '+e.error;r.onresult=e=>apply(e.results[0][0].transcript);r.start()};
+async function apiFetch(url,options={}){const h={apikey:KEY,'Content-Type':'application/json',...(options.headers||{})};const res=await fetch(url,{...options,headers:h});if(!res.ok){throw new Error((await res.text())||('HTTP '+res.status));}return res}
+async function load(){try{const res=await apiFetch(API+'?select=*&arnia=eq.A07&order=data_visita.desc');const v=await res.json();if(!v.length){history.innerHTML='<p class="empty">Nessuna visita salvata.</p>';return}history.innerHTML=v.map(x=>`<article class="visit"><div class="date">📅 ${new Date(x.data_visita).toLocaleString('it-IT')}</div><p>👑 <b>Regina:</b> ${esc(x.regina)}</p><p>🐣 <b>Covata:</b> ${esc(x.covata)}</p><p>🍯 <b>Scorte:</b> ${esc(x.scorte)}</p><p>💪 <b>Forza famiglia:</b> ${esc(x.forza_famiglia)}</p><p>📋 <b>Prossima azione:</b> ${esc(x.prossima_azione)}</p><p>⚖️ <b>Peso:</b> ${esc(x.peso)}</p><p>🌡️ <b>Temperatura:</b> ${esc(x.temperatura)}</p><p>💧 <b>Umidità:</b> ${esc(x.umidita)}</p><p>🎤 <b>Suono:</b> ${esc(x.suono)}</p></article>`).join('')}catch(e){history.innerHTML='<p class="error">Errore caricamento storico: '+esc(e.message)+'</p>'}}
+document.getElementById('save').onclick=async()=>{msg.textContent='Salvataggio in corso…';const row={arnia:'A07',data_visita:new Date().toISOString(),regina:data.Regina,covata:data.Covata,scorte:data.Scorte,forza_famiglia:data['Forza famiglia'],prossima_azione:data['Prossima azione'],peso:data.Peso,temperatura:data.Temperatura,umidita:data['Umidità'],suono:data.Suono};try{await apiFetch(API,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(row)});msg.textContent='✓ Visita salvata e condivisa.';await load()}catch(e){msg.textContent='Errore salvataggio: '+e.message}};
+render();load();
 </script></body></html>
