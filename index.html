@@ -1,25 +1,17 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Arnia A07</title>
 <style>
-*{box-sizing:border-box} body{margin:0;padding:12px;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#222}.scheda{width:100%;max-width:600px;margin:0 auto;border:1px solid #ddd;border-radius:14px;overflow:hidden}table{width:100%;border-collapse:collapse}td{padding:15px 10px;border-bottom:1px solid #e7e7e7;vertical-align:middle}tr:last-child td{border-bottom:none}.icona{width:48px;text-align:center;font-size:23px}.campo{font-weight:700;width:38%}.valore{color:#333}.verificare{color:#b86600;font-weight:700}@media(max-width:480px){body{padding:8px}td{padding:13px 7px;font-size:14px}.icona{width:40px;font-size:21px}.campo{width:40%}}
-</style>
-</head>
-<body>
-<div class="scheda"><table>
-<tr><td class="icona">🐝</td><td class="campo">Arnia</td><td class="valore">A07</td></tr>
-<tr><td class="icona">👑</td><td class="campo">Regina</td><td class="valore">Presente</td></tr>
-<tr><td class="icona">🐣</td><td class="campo">Covata</td><td class="valore">6 telaini, buona</td></tr>
-<tr><td class="icona">🍯</td><td class="campo">Scorte</td><td class="valore">Discrete</td></tr>
-<tr><td class="icona">💪</td><td class="campo">Forza famiglia</td><td class="valore">Alta</td></tr>
-<tr><td class="icona">📋</td><td class="campo">Prossima azione</td><td class="valore">Verificare melario</td></tr>
-<tr><td class="icona">📅</td><td class="campo">Data visita</td><td class="valore">01/10/2026</td></tr>
-<tr><td class="icona">⚖️</td><td class="campo">Peso</td><td class="valore verificare">Da verificare</td></tr>
-<tr><td class="icona">🌡️</td><td class="campo">Temperatura</td><td class="valore verificare">Da verificare</td></tr>
-<tr><td class="icona">💧</td><td class="campo">Umidità</td><td class="valore verificare">Da verificare</td></tr>
-<tr><td class="icona">🎤</td><td class="campo">Suono</td><td class="valore verificare">Da verificare</td></tr>
-</table></div>
-</body></html>
+*{box-sizing:border-box}body{margin:0;padding:10px;font-family:Arial,sans-serif;background:#fff;color:#222}.wrap{max-width:600px;margin:auto}.scheda{border:1px solid #ddd;border-radius:14px;overflow:hidden}table{width:100%;border-collapse:collapse}td{padding:14px 8px;border-bottom:1px solid #e7e7e7}tr:last-child td{border:0}.ico{width:44px;text-align:center;font-size:22px}.campo{font-weight:700;width:38%}.ver{color:#b86600;font-weight:700}.controls{margin-top:12px}.mic{width:100%;border:0;border-radius:14px;padding:15px;background:#d99000;color:#fff;font-size:17px;font-weight:700}.mic.on{background:#c62828}.msg{margin:9px 1px;color:#555;font-size:14px}.help{font-size:13px;color:#666}
+</style></head><body><div class="wrap"><div class="scheda"><table><tbody id="rows"></tbody></table></div><div class="controls"><button id="mic" class="mic">🎤 Modifica a voce</button><p id="msg" class="msg">Esempio: “Peso 47 chili” oppure “Regina presente”.</p><div class="help">Le modifiche vengono salvate su questo dispositivo.</div></div></div>
+<script>
+const defaults={"Arnia":"A07","Regina":"Presente","Covata":"6 telaini, buona","Scorte":"Discrete","Forza famiglia":"Alta","Prossima azione":"Verificare melario","Data visita":"01/10/2026","Peso":"Da verificare","Temperatura":"Da verificare","Umidità":"Da verificare","Suono":"Da verificare"};
+const icons={"Arnia":"🐝","Regina":"👑","Covata":"🐣","Scorte":"🍯","Forza famiglia":"💪","Prossima azione":"📋","Data visita":"📅","Peso":"⚖️","Temperatura":"🌡️","Umidità":"💧","Suono":"🎤"};
+let data={...defaults,...JSON.parse(localStorage.getItem('arniaA07')||'{}')};
+const aliases=[["prossima azione","Prossima azione"],["forza famiglia","Forza famiglia"],["data visita","Data visita"],["temperatura","Temperatura"],["umidità","Umidità"],["umidita","Umidità"],["regina","Regina"],["covata","Covata"],["scorte","Scorte"],["peso","Peso"],["suono","Suono"],["arnia","Arnia"]];
+function render(){document.getElementById('rows').innerHTML=Object.entries(data).map(([k,v])=>`<tr><td class="ico">${icons[k]}</td><td class="campo">${k}</td><td class="${v==='Da verificare'?'ver':''}">${v}</td></tr>`).join('')}
+function apply(t){let low=t.toLocaleLowerCase('it-IT'),hit=aliases.find(([a])=>low.startsWith(a));if(!hit){msg.textContent='Campo non riconosciuto: “'+t+'”';return}let[a,k]=hit,v=t.slice(a.length).trim().replace(/^[:=\-]\s*/,'');if(!v){msg.textContent='Pronuncia anche il valore.';return}v=v.charAt(0).toUpperCase()+v.slice(1);data[k]=v;localStorage.setItem('arniaA07',JSON.stringify(data));render();msg.textContent='✓ '+k+' aggiornato: '+v}
+const btn=document.getElementById('mic'),msg=document.getElementById('msg');btn.onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){msg.textContent='Riconoscimento vocale non disponibile in questo browser.';return}const r=new SR();r.lang='it-IT';r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>{btn.classList.add('on');btn.textContent='🎙️ Sto ascoltando…'};r.onend=()=>{btn.classList.remove('on');btn.textContent='🎤 Modifica a voce'};r.onerror=e=>msg.textContent='Errore microfono: '+e.error;r.onresult=e=>apply(e.results[0][0].transcript);r.start()};render();
+</script></body></html>
